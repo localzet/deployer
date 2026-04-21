@@ -5,9 +5,6 @@
 
 Localzet Deployer is a self-hosted CI/CD control plane for teams that want to run their own delivery pipeline with GitHub Webhooks, private container registries, and Portainer-based deployments.
 
-Author: Ivan Zorin ([localzet](https://github.com/localzet))  
-Contact: [creator@localzet.com](mailto:creator@localzet.com)
-
 ## Overview
 
 Localzet Deployer is designed for teams that want:
