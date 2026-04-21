@@ -59,6 +59,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=Localzet Deployer
             org.opencontainers.image.description=Self-hosted CI/CD control plane with GitHub webhooks, Docker registry publishing, Portainer redeploys, history, and rollback.
+            org.opencontainers.image.source=https://github.com/localzet/deployer
             org.opencontainers.image.vendor=Ivan Zorin
             org.opencontainers.image.licenses=AGPL-3.0-only
 

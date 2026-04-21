@@ -494,9 +494,17 @@ async fn run_job(state: Arc<AppState>, job_id: Uuid) -> Result<()> {
         .insert(job_id, cancel_flag.clone());
     persist_job_snapshot(&state, job_id).await;
 
-    log_line(&state, job_id, "info", "worker", "Job picked by worker".to_string()).await;
+    log_line(
+        &state,
+        job_id,
+        "info",
+        "worker",
+        "Job picked by worker".to_string(),
+    )
+    .await;
 
-    let pipeline_result = execute_pipeline(state.clone(), job_id, &project, cancel_flag.clone()).await;
+    let pipeline_result =
+        execute_pipeline(state.clone(), job_id, &project, cancel_flag.clone()).await;
     let (result, health_status, health_error) = match pipeline_result {
         Ok(()) => match run_healthcheck(state.clone(), job_id, &project).await {
             Ok(status) => (Ok(()), status, None),
@@ -528,8 +536,14 @@ async fn run_job(state: Arc<AppState>, job_id: Uuid) -> Result<()> {
                     job.current_stage = Some("completed".to_string());
                 }
             }
-            log_line(&state, job_id, "info", "system", "Job finished successfully".to_string())
-                .await;
+            log_line(
+                &state,
+                job_id,
+                "info",
+                "system",
+                "Job finished successfully".to_string(),
+            )
+            .await;
             persist_job_snapshot(&state, job_id).await;
             persist_deployment_record(
                 &state,
@@ -593,7 +607,10 @@ async fn execute_pipeline(
 ) -> Result<()> {
     let (repo, branch, sha, short_sha, action, image_reference, source_deployment_id) = {
         let store = state.store.read().await;
-        let job = store.jobs.get(&job_id).ok_or_else(|| anyhow!("job missing"))?;
+        let job = store
+            .jobs
+            .get(&job_id)
+            .ok_or_else(|| anyhow!("job missing"))?;
         (
             job.repository.clone(),
             job.branch.clone(),
@@ -621,7 +638,11 @@ async fn execute_pipeline(
                 job_id,
                 "info",
                 "planner",
-                format!("Skipping step '{}' for action {}", step.name, action.as_str()),
+                format!(
+                    "Skipping step '{}' for action {}",
+                    step.name,
+                    action.as_str()
+                ),
             )
             .await;
             continue;
@@ -974,7 +995,11 @@ async fn require_api_auth(
     }
 }
 
-fn verify_api_auth(state: &AppState, headers: &HeaderMap, token: Option<&str>) -> Result<(), StatusCode> {
+fn verify_api_auth(
+    state: &AppState,
+    headers: &HeaderMap,
+    token: Option<&str>,
+) -> Result<(), StatusCode> {
     let Some(config) = &state.config.auth else {
         return Ok(());
     };
@@ -1213,11 +1238,15 @@ async fn github_webhook(
     headers: HeaderMap,
     body: String,
 ) -> Result<(StatusCode, Json<EnqueueResponse>), StatusCode> {
-    validate_signature(&state.config.security.github_webhook_secret, &headers, body.as_bytes())
-        .map_err(|err| {
-            warn!("webhook rejected: {err}");
-            StatusCode::UNAUTHORIZED
-        })?;
+    validate_signature(
+        &state.config.security.github_webhook_secret,
+        &headers,
+        body.as_bytes(),
+    )
+    .map_err(|err| {
+        warn!("webhook rejected: {err}");
+        StatusCode::UNAUTHORIZED
+    })?;
 
     let event = headers
         .get("x-github-event")
@@ -1502,7 +1531,11 @@ async fn hydrate_job_artifact_metadata(state: &AppState, job_id: Uuid) {
     persist_job_snapshot(state, job_id).await;
 }
 
-async fn resolve_image_digest(state: &AppState, job_id: Uuid, image_reference: &str) -> Option<String> {
+async fn resolve_image_digest(
+    state: &AppState,
+    job_id: Uuid,
+    image_reference: &str,
+) -> Option<String> {
     let output = Command::new("/bin/sh")
         .arg("-lc")
         .arg(format!(
@@ -1616,7 +1649,10 @@ async fn load_deployment_by_id(state: &AppState, deployment_id: i64) -> Option<D
     }
 }
 
-async fn load_latest_successful_deployment(state: &AppState, project_id: &str) -> Option<Deployment> {
+async fn load_latest_successful_deployment(
+    state: &AppState,
+    project_id: &str,
+) -> Option<Deployment> {
     let Some(db) = &state.db else {
         return None;
     };

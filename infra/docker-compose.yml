@@ -17,7 +17,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
+      test: [ "CMD", "curl", "-fsS", "http://localhost:8080/healthz" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -31,7 +31,7 @@ services:
       - registry-data:/var/lib/registry
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:5000/v2/"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:5000/v2/" ]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -49,7 +49,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cicd -d cicd"]
+      test: [ "CMD-SHELL", "pg_isready -U cicd -d cicd" ]
       interval: 10s
       timeout: 5s
       retries: 10

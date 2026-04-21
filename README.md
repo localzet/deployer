@@ -3,7 +3,8 @@
 [![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPLv3-blue.svg)](./LICENSE)
 [![Docker Publish](https://github.com/localzet/deployer/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/localzet/deployer/actions/workflows/docker-publish.yml)
 
-Localzet Deployer is a self-hosted CI/CD control plane for teams that want to run their own delivery pipeline with GitHub Webhooks, private container registries, and Portainer-based deployments.
+Localzet Deployer is a self-hosted CI/CD control plane for teams that want to run their own delivery pipeline with
+GitHub Webhooks, private container registries, and Portainer-based deployments.
 
 ## Overview
 
@@ -37,11 +38,11 @@ Core capabilities:
 4. The service resolves a project by `repository + branch` from `config/app.toml`.
 5. A job is created, queued, and locked by `repo:branch`.
 6. The worker executes action-aware steps such as:
-   - checkout
-   - build and push
-   - promote immutable tag to stable tag
-   - redeploy
-   - health check
+    - checkout
+    - build and push
+    - promote immutable tag to stable tag
+    - redeploy
+    - health check
 7. Logs are stored in PostgreSQL and streamed to the UI with SSE.
 8. Operators can inspect jobs and deployments, then trigger `retry`, `redeploy`, or `rollback`.
 
@@ -113,12 +114,12 @@ Toolchain baseline:
 
 1. Copy [config/app.example.toml](./config/app.example.toml) to `config/app.toml`.
 2. Set real values for:
-   - `github_webhook_secret`
-   - `auth.api_token`
-   - PostgreSQL connection settings
-   - registry credentials
-   - Portainer webhook URL
-   - health check URL
+    - `github_webhook_secret`
+    - `auth.api_token`
+    - PostgreSQL connection settings
+    - registry credentials
+    - Portainer webhook URL
+    - health check URL
 3. Start the stack:
 
 ```bash

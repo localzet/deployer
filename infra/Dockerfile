@@ -1,3 +1,9 @@
+LABEL org.opencontainers.image.title = "Localzet Deployer"
+LABEL org.opencontainers.image.description = "Self-hosted CI/CD control plane with GitHub webhooks, Docker registry publishing, Portainer redeploys, history, and rollback."
+LABEL org.opencontainers.image.source = "https://github.com/localzet/deployer"
+LABEL org.opencontainers.image.vendor = "Ivan Zorin"
+LABEL org.opencontainers.image.licenses = "AGPL-3.0-only"
+
 FROM rust:1.88-bookworm AS builder
 WORKDIR /app
 

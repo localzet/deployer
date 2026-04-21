@@ -1,290 +1,319 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Localzet Deployer</title>
     <style>
-      :root {
-        color-scheme: dark;
-        --bg: #0d1117;
-        --panel: #161b22;
-        --line: #30363d;
-        --text: #e6edf3;
-        --muted: #8b949e;
-        --good: #238636;
-        --bad: #da3633;
-        --warn: #d29922;
-        --accent: #2f81f7;
-      }
+        :root {
+            color-scheme: dark;
+            --bg: #0d1117;
+            --panel: #161b22;
+            --line: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --good: #238636;
+            --bad: #da3633;
+            --warn: #d29922;
+            --accent: #2f81f7;
+        }
 
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-        background:
-          radial-gradient(circle at top right, rgba(47,129,247,0.18), transparent 26%),
-          radial-gradient(circle at top left, rgba(210,153,34,0.12), transparent 20%),
-          var(--bg);
-        color: var(--text);
-      }
+        * {
+            box-sizing: border-box;
+        }
 
-      header {
-        padding: 24px 28px 12px;
-        border-bottom: 1px solid var(--line);
-      }
+        body {
+            margin: 0;
+            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top right, rgba(47, 129, 247, 0.18), transparent 26%),
+            radial-gradient(circle at top left, rgba(210, 153, 34, 0.12), transparent 20%),
+            var(--bg);
+            color: var(--text);
+        }
 
-      h1 {
-        margin: 0;
-        font-size: 28px;
-      }
+        header {
+            padding: 24px 28px 12px;
+            border-bottom: 1px solid var(--line);
+        }
 
-      p {
-        margin: 6px 0 0;
-        color: var(--muted);
-      }
+        h1 {
+            margin: 0;
+            font-size: 28px;
+        }
 
-      main {
-        display: grid;
-        grid-template-columns: 360px 1fr;
-        gap: 16px;
-        padding: 16px 28px 28px;
-      }
+        p {
+            margin: 6px 0 0;
+            color: var(--muted);
+        }
 
-      .panel {
-        background: rgba(22, 27, 34, 0.92);
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        overflow: hidden;
-        backdrop-filter: blur(10px);
-      }
-
-      .panel h2 {
-        margin: 0;
-        padding: 18px 18px 10px;
-        font-size: 15px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-
-      .jobs {
-        max-height: calc(100vh - 420px);
-        overflow: auto;
-      }
-
-      .deployments {
-        border-top: 1px solid var(--line);
-        max-height: 220px;
-        overflow: auto;
-      }
-
-      .deployment {
-        padding: 12px 18px;
-        border-top: 1px solid var(--line);
-        font-size: 12px;
-      }
-
-      .deployment-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-      }
-
-      .deployment button {
-        padding: 6px 10px;
-        border-radius: 8px;
-        font-size: 12px;
-      }
-
-      .job {
-        padding: 14px 18px;
-        border-top: 1px solid var(--line);
-        cursor: pointer;
-      }
-
-      .job:hover, .job.active {
-        background: rgba(47, 129, 247, 0.08);
-      }
-
-      .job-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        font-size: 14px;
-      }
-
-      .job-meta {
-        margin-top: 8px;
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .badge {
-        border-radius: 999px;
-        padding: 4px 9px;
-        font-size: 11px;
-        text-transform: uppercase;
-      }
-
-      .queued { background: rgba(210,153,34,0.15); color: #f2cc60; }
-      .running { background: rgba(47,129,247,0.15); color: #79c0ff; }
-      .success { background: rgba(35,134,54,0.18); color: #56d364; }
-      .failed, .cancelled { background: rgba(218,54,51,0.18); color: #ff7b72; }
-
-      .details {
-        display: grid;
-        grid-template-rows: auto auto 1fr;
-        min-height: calc(100vh - 180px);
-      }
-
-      .details-head {
-        padding: 18px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .details-head strong {
-        font-size: 18px;
-      }
-
-      .details-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        padding: 18px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .kv {
-        background: rgba(13, 17, 23, 0.7);
-        border-radius: 12px;
-        border: 1px solid rgba(48, 54, 61, 0.9);
-        padding: 12px;
-      }
-
-      .kv label {
-        display: block;
-        color: var(--muted);
-        font-size: 11px;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-      }
-
-      .actions {
-        display: flex;
-        gap: 10px;
-        padding: 0 18px 18px;
-      }
-
-      button {
-        border: 0;
-        border-radius: 10px;
-        padding: 10px 14px;
-        font: inherit;
-        color: white;
-        cursor: pointer;
-      }
-
-      button.primary { background: var(--accent); }
-      button.warn { background: var(--warn); color: #111; }
-      button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-      pre {
-        margin: 0;
-        padding: 18px;
-        overflow: auto;
-        font-family: "IBM Plex Mono", "Fira Code", monospace;
-        font-size: 12px;
-        line-height: 1.45;
-      }
-
-      @media (max-width: 980px) {
         main {
-          grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 16px;
+            padding: 16px 28px 28px;
         }
-        .jobs, .details {
-          max-height: none;
-          min-height: auto;
+
+        .panel {
+            background: rgba(22, 27, 34, 0.92);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
         }
+
+        .panel h2 {
+            margin: 0;
+            padding: 18px 18px 10px;
+            font-size: 15px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .jobs {
+            max-height: calc(100vh - 420px);
+            overflow: auto;
+        }
+
+        .deployments {
+            border-top: 1px solid var(--line);
+            max-height: 220px;
+            overflow: auto;
+        }
+
+        .deployment {
+            padding: 12px 18px;
+            border-top: 1px solid var(--line);
+            font-size: 12px;
+        }
+
+        .deployment-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .deployment button {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .job {
+            padding: 14px 18px;
+            border-top: 1px solid var(--line);
+            cursor: pointer;
+        }
+
+        .job:hover, .job.active {
+            background: rgba(47, 129, 247, 0.08);
+        }
+
+        .job-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .job-meta {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .badge {
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .queued {
+            background: rgba(210, 153, 34, 0.15);
+            color: #f2cc60;
+        }
+
+        .running {
+            background: rgba(47, 129, 247, 0.15);
+            color: #79c0ff;
+        }
+
+        .success {
+            background: rgba(35, 134, 54, 0.18);
+            color: #56d364;
+        }
+
+        .failed, .cancelled {
+            background: rgba(218, 54, 51, 0.18);
+            color: #ff7b72;
+        }
+
+        .details {
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            min-height: calc(100vh - 180px);
+        }
+
+        .details-head {
+            padding: 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .details-head strong {
+            font-size: 18px;
+        }
+
         .details-grid {
-          grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            padding: 18px;
+            border-bottom: 1px solid var(--line);
         }
-      }
+
+        .kv {
+            background: rgba(13, 17, 23, 0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(48, 54, 61, 0.9);
+            padding: 12px;
+        }
+
+        .kv label {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 18px 18px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font: inherit;
+            color: white;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: var(--accent);
+        }
+
+        button.warn {
+            background: var(--warn);
+            color: #111;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        pre {
+            margin: 0;
+            padding: 18px;
+            overflow: auto;
+            font-family: "IBM Plex Mono", "Fira Code", monospace;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        @media (max-width: 980px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            .jobs, .details {
+                max-height: none;
+                min-height: auto;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <header>
-      <h1>Localzet Deployer</h1>
-      <p>Self-hosted CI/CD control plane for webhook-driven delivery, logs, health checks, and rollback.</p>
-    </header>
-    <main>
-      <section class="panel">
+</head>
+<body>
+<header>
+    <h1>Localzet Deployer</h1>
+    <p>Self-hosted CI/CD control plane for webhook-driven delivery, logs, health checks, and rollback.</p>
+</header>
+<main>
+    <section class="panel">
         <h2>Jobs</h2>
         <div id="jobs" class="jobs"></div>
         <h2>Deployments</h2>
         <div id="deployments" class="deployments"></div>
-      </section>
-      <section class="panel details">
+    </section>
+    <section class="panel details">
         <div class="details-head">
-          <strong id="title">No job selected</strong>
-          <p id="subtitle">Select a job to inspect details and logs.</p>
-          <p id="auth-state">API token not set</p>
+            <strong id="title">No job selected</strong>
+            <p id="subtitle">Select a job to inspect details and logs.</p>
+            <p id="auth-state">API token not set</p>
         </div>
         <div id="details-grid" class="details-grid"></div>
         <div>
-          <div class="actions">
-            <button id="retry" class="primary" disabled>Retry</button>
-            <button id="cancel" class="warn" disabled>Cancel</button>
-            <button id="redeploy" class="primary" disabled>Redeploy</button>
-          </div>
-          <pre id="log">Logs will appear here.</pre>
+            <div class="actions">
+                <button id="retry" class="primary" disabled>Retry</button>
+                <button id="cancel" class="warn" disabled>Cancel</button>
+                <button id="redeploy" class="primary" disabled>Redeploy</button>
+            </div>
+            <pre id="log">Logs will appear here.</pre>
         </div>
-      </section>
-    </main>
-    <script>
-      const jobsNode = document.getElementById("jobs");
-      const titleNode = document.getElementById("title");
-      const subtitleNode = document.getElementById("subtitle");
-      const detailsGridNode = document.getElementById("details-grid");
-      const logNode = document.getElementById("log");
-      const retryButton = document.getElementById("retry");
-      const cancelButton = document.getElementById("cancel");
-      const redeployButton = document.getElementById("redeploy");
-      const authStateNode = document.getElementById("auth-state");
+    </section>
+</main>
+<script>
+    const jobsNode = document.getElementById("jobs");
+    const titleNode = document.getElementById("title");
+    const subtitleNode = document.getElementById("subtitle");
+    const detailsGridNode = document.getElementById("details-grid");
+    const logNode = document.getElementById("log");
+    const retryButton = document.getElementById("retry");
+    const cancelButton = document.getElementById("cancel");
+    const redeployButton = document.getElementById("redeploy");
+    const authStateNode = document.getElementById("auth-state");
 
-      let selectedJobId = null;
-      let eventSource = null;
-      let currentJob = null;
-      let apiToken = localStorage.getItem("cicd_api_token") || "";
+    let selectedJobId = null;
+    let eventSource = null;
+    let currentJob = null;
+    let apiToken = localStorage.getItem("cicd_api_token") || "";
 
-      function ensureToken() {
+    function ensureToken() {
         if (!apiToken) {
-          const value = window.prompt("Enter API token");
-          if (value) {
-            apiToken = value.trim();
-            localStorage.setItem("cicd_api_token", apiToken);
-          }
+            const value = window.prompt("Enter API token");
+            if (value) {
+                apiToken = value.trim();
+                localStorage.setItem("cicd_api_token", apiToken);
+            }
         }
         authStateNode.textContent = apiToken ? "API token loaded" : "API token not set";
-      }
+    }
 
-      async function apiFetch(url, options = {}) {
+    async function apiFetch(url, options = {}) {
         const headers = new Headers(options.headers || {});
         if (apiToken) headers.set("Authorization", `Bearer ${apiToken}`);
-        const response = await fetch(url, { ...options, headers });
+        const response = await fetch(url, {...options, headers});
         if (response.status === 401) {
-          localStorage.removeItem("cicd_api_token");
-          apiToken = "";
-          ensureToken();
-          throw new Error("Unauthorized");
+            localStorage.removeItem("cicd_api_token");
+            apiToken = "";
+            ensureToken();
+            throw new Error("Unauthorized");
         }
         return response;
-      }
+    }
 
-      const statusClass = (status) => status || "queued";
+    const statusClass = (status) => status || "queued";
 
-      function renderJobs(jobs) {
+    function renderJobs(jobs) {
         jobsNode.innerHTML = jobs.map((job) => `
           <div class="job ${job.id === selectedJobId ? "active" : ""}" data-id="${job.id}">
             <div class="job-top">
@@ -297,14 +326,14 @@
         `).join("");
 
         jobsNode.querySelectorAll(".job").forEach((node) => {
-          node.addEventListener("click", () => {
-            const { id } = node.dataset;
-            if (id) selectJob(id);
-          });
+            node.addEventListener("click", () => {
+                const {id} = node.dataset;
+                if (id) selectJob(id);
+            });
         });
-      }
+    }
 
-      function renderDeployments(deployments) {
+    function renderDeployments(deployments) {
         document.getElementById("deployments").innerHTML = deployments.map((item) => `
           <div class="deployment">
             <div class="deployment-top">
@@ -317,29 +346,29 @@
         `).join("");
 
         document.querySelectorAll(".rollback-button").forEach((node) => {
-          node.addEventListener("click", async (event) => {
-            event.stopPropagation();
-            const id = node.dataset.id;
-            if (!id) return;
-            await apiFetch(`/api/deployments/${id}/rollback`, { method: "POST" });
-            await refreshDashboard();
-          });
+            node.addEventListener("click", async (event) => {
+                event.stopPropagation();
+                const id = node.dataset.id;
+                if (!id) return;
+                await apiFetch(`/api/deployments/${id}/rollback`, {method: "POST"});
+                await refreshDashboard();
+            });
         });
-      }
+    }
 
-      function renderDetails(job) {
+    function renderDetails(job) {
         currentJob = job;
         titleNode.textContent = `${job.project_id} · ${job.status}`;
         subtitleNode.textContent = `${job.repository} · ${job.branch} · ${job.sha}`;
         detailsGridNode.innerHTML = [
-          ["Stage", job.current_stage || "-"],
-          ["Created", job.created_at],
-          ["Started", job.started_at || "-"],
-          ["Finished", job.finished_at || "-"],
-          ["Image", `${job.image}:${job.stable_tag || job.branch}`],
-          ["Immutable Ref", job.image_reference],
-          ["Digest", job.image_digest || "-"],
-          ["Webhook", job.portainer_webhook || "-"],
+            ["Stage", job.current_stage || "-"],
+            ["Created", job.created_at],
+            ["Started", job.started_at || "-"],
+            ["Finished", job.finished_at || "-"],
+            ["Image", `${job.image}:${job.stable_tag || job.branch}`],
+            ["Immutable Ref", job.image_reference],
+            ["Digest", job.image_digest || "-"],
+            ["Webhook", job.portainer_webhook || "-"],
         ].map(([label, value]) => `
           <div class="kv">
             <label>${label}</label>
@@ -348,31 +377,31 @@
         `).join("");
 
         logNode.textContent = job.logs.length
-          ? job.logs.map((entry) => `[${entry.ts}] [${entry.stage}] ${entry.message}`).join("\n")
-          : "No logs yet.";
+            ? job.logs.map((entry) => `[${entry.ts}] [${entry.stage}] ${entry.message}`).join("\n")
+            : "No logs yet.";
 
         retryButton.disabled = false;
         cancelButton.disabled = !["queued", "running"].includes(job.status);
         redeployButton.disabled = false;
-      }
+    }
 
-      async function refreshDashboard() {
+    async function refreshDashboard() {
         const response = await apiFetch("/api/dashboard");
         const data = await response.json();
         renderJobs(data.jobs);
         renderDeployments(data.deployments || []);
         if (!selectedJobId && data.jobs.length) {
-          selectJob(data.jobs[0].id);
+            selectJob(data.jobs[0].id);
         } else if (selectedJobId) {
-          const selected = data.jobs.find((job) => job.id === selectedJobId);
-          if (selected && currentJob) {
-            currentJob.status = selected.status;
-            currentJob.current_stage = selected.current_stage;
-          }
+            const selected = data.jobs.find((job) => job.id === selectedJobId);
+            if (selected && currentJob) {
+                currentJob.status = selected.status;
+                currentJob.current_stage = selected.current_stage;
+            }
         }
-      }
+    }
 
-      async function selectJob(jobId) {
+    async function selectJob(jobId) {
         selectedJobId = jobId;
         const response = await apiFetch(`/api/jobs/${jobId}`);
         if (!response.ok) return;
@@ -380,45 +409,45 @@
         renderDetails(job);
         await refreshDashboard();
         attachLogStream(jobId);
-      }
+    }
 
-      function attachLogStream(jobId) {
+    function attachLogStream(jobId) {
         if (eventSource) eventSource.close();
         const token = encodeURIComponent(apiToken);
         eventSource = new EventSource(`/api/jobs/${jobId}/events?token=${token}`);
         eventSource.addEventListener("log", (event) => {
-          const entry = JSON.parse(event.data);
-          const line = `[${entry.ts}] [${entry.stage}] ${entry.message}`;
-          if (logNode.textContent === "No logs yet.") {
-            logNode.textContent = line;
-          } else {
-            logNode.textContent += `\n${line}`;
-          }
-          logNode.scrollTop = logNode.scrollHeight;
+            const entry = JSON.parse(event.data);
+            const line = `[${entry.ts}] [${entry.stage}] ${entry.message}`;
+            if (logNode.textContent === "No logs yet.") {
+                logNode.textContent = line;
+            } else {
+                logNode.textContent += `\n${line}`;
+            }
+            logNode.scrollTop = logNode.scrollHeight;
         });
-      }
+    }
 
-      retryButton.addEventListener("click", async () => {
+    retryButton.addEventListener("click", async () => {
         if (!selectedJobId) return;
-        await apiFetch(`/api/jobs/${selectedJobId}/retry`, { method: "POST" });
+        await apiFetch(`/api/jobs/${selectedJobId}/retry`, {method: "POST"});
         await refreshDashboard();
-      });
+    });
 
-      cancelButton.addEventListener("click", async () => {
+    cancelButton.addEventListener("click", async () => {
         if (!selectedJobId) return;
-        await apiFetch(`/api/jobs/${selectedJobId}/cancel`, { method: "POST" });
+        await apiFetch(`/api/jobs/${selectedJobId}/cancel`, {method: "POST"});
         await refreshDashboard();
-      });
+    });
 
-      redeployButton.addEventListener("click", async () => {
+    redeployButton.addEventListener("click", async () => {
         if (!currentJob) return;
-        await apiFetch(`/api/projects/${currentJob.project_id}/redeploy`, { method: "POST" });
+        await apiFetch(`/api/projects/${currentJob.project_id}/redeploy`, {method: "POST"});
         await refreshDashboard();
-      });
+    });
 
-      ensureToken();
-      refreshDashboard();
-      setInterval(refreshDashboard, 4000);
-    </script>
-  </body>
-  </html>
+    ensureToken();
+    refreshDashboard();
+    setInterval(refreshDashboard, 4000);
+</script>
+</body>
+</html>
