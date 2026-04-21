@@ -1,0 +1,76 @@
+[server]
+listen = "0.0.0.0:8080"
+
+[security]
+github_webhook_secret = "change-me"
+
+[auth]
+api_token = "change-me-too"
+
+[runner]
+workspace_root = "/workspace/repos"
+max_parallel_jobs = 2
+
+[database]
+url = "postgres://cicd:cicd@postgres:5432/cicd"
+max_connections = 5
+
+[[projects]]
+id = "demo-app"
+repository = "localzet/demo-app"
+branch = "main"
+workdir = "demo-app"
+image = "registry.local:5000/demo-app"
+stable_tag = "main"
+portainer_webhook = "https://portainer.example/api/webhooks/stack/demo"
+healthcheck_url = "https://demo-app.example/healthz"
+healthcheck_timeout_sec = 60
+
+[projects.env]
+REGISTRY_USER = "registry-user"
+REGISTRY_PASSWORD = "registry-password"
+
+[[projects.steps]]
+name = "clone"
+only_actions = ["webhook", "retry"]
+run = """
+if [ ! -d .git ]; then
+  git clone https://github.com/$REPOSITORY.git .
+fi
+git fetch --all --prune
+git checkout $SHA
+git reset --hard $SHA
+"""
+timeout_sec = 300
+
+[[projects.steps]]
+name = "build_push"
+only_actions = ["webhook", "retry"]
+run = """
+echo "$REGISTRY_PASSWORD" | docker login registry.local:5000 --username "$REGISTRY_USER" --password-stdin
+docker buildx build \
+  --push \
+  --tag "$IMAGE_REFERENCE" \
+  --tag "$IMAGE:$STABLE_TAG" \
+  .
+"""
+timeout_sec = 1800
+
+[[projects.steps]]
+name = "promote_image"
+only_actions = ["manual", "rollback"]
+run = """
+echo "$REGISTRY_PASSWORD" | docker login registry.local:5000 --username "$REGISTRY_USER" --password-stdin
+docker buildx imagetools create \
+  --tag "$STABLE_IMAGE_REFERENCE" \
+  "$IMAGE_REFERENCE"
+"""
+timeout_sec = 300
+
+[[projects.steps]]
+name = "redeploy"
+only_actions = ["webhook", "retry", "manual", "rollback"]
+run = """
+curl -fsS -X POST "$PORTAINER_WEBHOOK"
+"""
+timeout_sec = 120
