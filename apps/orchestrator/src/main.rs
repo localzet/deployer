@@ -1996,6 +1996,51 @@ impl PgStore {
         Ok(deployments)
     }
 
+    async fn load_latest_successful_deployment(
+        &self,
+        project_id: &str,
+    ) -> Result<Option<Deployment>> {
+        let row = sqlx::query(
+            r#"
+            select
+              id, job_id, project_id, repository, branch, sha, image, image_reference, image_digest, stable_tag, status,
+              deployed_at, healthcheck_url, healthcheck_status, healthcheck_error
+            from deployments
+            where project_id = $1 and status = 'success'
+            order by deployed_at desc, id desc
+            limit 1
+            "#,
+        )
+        .bind(project_id)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        let Some(row) = row else {
+            return Ok(None);
+        };
+
+        let status_raw: String = row.try_get("status")?;
+        let health_status_raw: Option<i32> = row.try_get("healthcheck_status")?;
+
+        Ok(Some(Deployment {
+            id: row.try_get("id")?,
+            job_id: row.try_get("job_id")?,
+            project_id: row.try_get("project_id")?,
+            repository: row.try_get("repository")?,
+            branch: row.try_get("branch")?,
+            sha: row.try_get("sha")?,
+            image: row.try_get("image")?,
+            image_reference: row.try_get("image_reference")?,
+            image_digest: row.try_get("image_digest")?,
+            stable_tag: row.try_get("stable_tag")?,
+            status: DeploymentStatus::from_db(&status_raw)?,
+            deployed_at: row.try_get("deployed_at")?,
+            healthcheck_url: row.try_get("healthcheck_url")?,
+            healthcheck_status: health_status_raw.and_then(|value| u16::try_from(value).ok()),
+            healthcheck_error: row.try_get("healthcheck_error")?,
+        }))
+    }
+
     async fn load_deployment_by_id(&self, deployment_id: i64) -> Result<Option<Deployment>> {
         let row = sqlx::query(
             r#"
