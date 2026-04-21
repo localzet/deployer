@@ -1,7 +1,6 @@
 # Localzet Deployer
 
 [![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPLv3-blue.svg)](./LICENSE)
-[![Docker Publish](https://github.com/localzet/deployer/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/localzet/deployer/actions/workflows/docker-publish.yml)
 
 Localzet Deployer is a self-hosted CI/CD control plane for teams that want to run their own delivery pipeline with
 GitHub Webhooks, private container registries, and Portainer-based deployments.
@@ -54,15 +53,12 @@ Core capabilities:
 - Provide a lightweight built-in UI that can be replaced later.
 - Persist operational history while keeping runtime queue state simple.
 
-## Repository Structure
+## Operator Notes
 
-- `apps/orchestrator` — Rust backend
-- `web` — built-in web UI
-- `config` — example runtime configuration
-- `config/app.prod.toml.example` — production-oriented configuration template
-- `infra` — Dockerfile and Docker Compose setup
-- `db/migrations` — PostgreSQL schema
-- `scripts/smoke.sh` — post-start smoke check
+- The repository contains the Rust backend, built-in web UI, example configuration, and deployment assets.
+- Operators typically only need the released image plus a mounted `app.toml`.
+- `config/app.prod.toml.example` is the reference runtime template.
+- `scripts/smoke.sh` is useful after first startup.
 
 ## API
 
@@ -106,45 +102,79 @@ Steps can also be filtered with:
 
 ## Quick Start
 
-Toolchain baseline:
+For operators who want to run the released container image:
 
-- Rust `1.88+` for local builds
-- Docker Buildx for image publishing
-- PostgreSQL 16 for the default stack
-
-1. Copy [config/app.example.toml](./config/app.example.toml) to `config/app.toml`.
-2. Set real values for:
-    - `github_webhook_secret`
-    - `auth.api_token`
-    - PostgreSQL connection settings
-    - registry credentials
-    - Portainer webhook URL
-    - health check URL
-3. Start the stack:
+1. Download the production config template from the repository into a local runtime directory:
 
 ```bash
-docker compose -f infra/docker-compose.yml up --build -d
+mkdir -p deployer/config
+curl -fsSL https://raw.githubusercontent.com/localzet/deployer/main/config/app.prod.toml.example \
+  -o deployer/config/app.toml
 ```
 
-4. Open `http://localhost:8080`.
-5. Run the smoke check:
+2. Edit `deployer/config/app.toml` and set real values for:
+   - `github_webhook_secret`
+   - `auth.api_token`
+   - PostgreSQL connection settings
+   - registry credentials
+   - Portainer webhook URL
+   - health check URL
+
+3. Use a Compose file that mounts the config into the container, for example:
+
+```yaml
+services:
+  orchestrator:
+    image: localzet/deployer:latest
+    environment:
+      CICD_CONFIG: /app/config/app.toml
+      RUST_LOG: info,tower_http=info
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config:ro
+      - cicd-workspace:/workspace/repos
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: cicd
+      POSTGRES_USER: cicd
+      POSTGRES_PASSWORD: cicd
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  registry:
+    image: registry:2
+    volumes:
+      - registry-data:/var/lib/registry
+    restart: unless-stopped
+
+volumes:
+  cicd-workspace:
+  postgres-data:
+  registry-data:
+```
+
+4. Start the stack:
+
+```bash
+docker compose up -d
+```
+
+5. Open `http://localhost:8080`.
+
+6. Run the smoke check:
 
 ```bash
 API_TOKEN='your-token' ./scripts/smoke.sh http://localhost:8080
 ```
-
-## Image Publishing
-
-The workflow in [docker-publish.yml](./.github/workflows/docker-publish.yml) publishes images to:
-
-- Docker Hub: `localzet/deployer`
-- GHCR: `ghcr.io/localzet/deployer`
-
-Required GitHub secret:
-
-- `DOCKERHUB_TOKEN` — Docker Hub access token
-
-The workflow uses the built-in `GITHUB_TOKEN` for GHCR publishing.
 
 ## Operational Status
 

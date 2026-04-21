@@ -1,9 +1,3 @@
-LABEL org.opencontainers.image.title = "Localzet Deployer"
-LABEL org.opencontainers.image.description = "Self-hosted CI/CD control plane with GitHub webhooks, Docker registry publishing, Portainer redeploys, history, and rollback."
-LABEL org.opencontainers.image.source = "https://github.com/localzet/deployer"
-LABEL org.opencontainers.image.vendor = "Ivan Zorin"
-LABEL org.opencontainers.image.licenses = "AGPL-3.0-only"
-
 FROM rust:1.88-bookworm AS builder
 WORKDIR /app
 
@@ -16,14 +10,17 @@ COPY apps/orchestrator/src apps/orchestrator/src
 COPY web web
 RUN cargo build --release -p cicd-orchestrator
 
+FROM docker:cli AS docker-cli
+
 FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 RUN printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' > /etc/apt/apt.conf.d/80-retries \
   && apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates git curl docker.io \
+  && apt-get install -y --no-install-recommends ca-certificates git curl \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=builder /app/target/release/cicd-orchestrator /usr/local/bin/cicd-orchestrator
 COPY web /app/web
 
