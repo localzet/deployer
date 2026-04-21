@@ -108,6 +108,12 @@ Steps can also be filtered with:
 
 ## Quick Start
 
+Toolchain baseline:
+
+- Rust `1.88+` for local builds
+- Docker Buildx for image publishing
+- PostgreSQL 16 for the default stack
+
 1. Copy [config/app.example.toml](./config/app.example.toml) to `config/app.toml`.
 2. Set real values for:
    - `github_webhook_secret`

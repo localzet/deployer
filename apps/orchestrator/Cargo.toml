@@ -8,6 +8,7 @@ homepage.workspace = true
 license.workspace = true
 readme = "../../README.md"
 repository.workspace = true
+rust-version = "1.88"
 
 [dependencies]
 anyhow = "1.0"
