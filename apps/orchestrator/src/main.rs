@@ -373,12 +373,33 @@ async fn init_db(config: Option<DatabaseConfig>) -> Result<Option<PgStore>> {
         .max_connections(config.max_connections.unwrap_or(5))
         .connect(&config.url)
         .await
-        .with_context(|| "failed to connect to postgres")?;
+        .map_err(|err| map_db_connect_error(err, &config.url))?;
 
     let store = PgStore { pool };
     store.bootstrap().await?;
 
     Ok(Some(store))
+}
+
+fn map_db_connect_error(err: sqlx::Error, database_url: &str) -> anyhow::Error {
+    if let sqlx::Error::Database(db_err) = &err {
+        if db_err.code().as_deref() == Some("3D000") {
+            let db_name = extract_database_name(database_url).unwrap_or("<unknown>");
+            return anyhow!(
+                "failed to connect to postgres: database \"{db_name}\" does not exist. \
+create it first (for example: createdb {db_name}) or update [database].url in config"
+            );
+        }
+    }
+
+    anyhow!(err).context("failed to connect to postgres")
+}
+
+fn extract_database_name(database_url: &str) -> Option<&str> {
+    let trimmed = database_url
+        .split_once('?')
+        .map_or(database_url, |(head, _)| head);
+    trimmed.rsplit('/').next().filter(|name| !name.is_empty())
 }
 
 async fn restore_store(db: Option<&PgStore>) -> Result<StateStore> {
