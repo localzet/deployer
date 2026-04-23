@@ -384,7 +384,8 @@ async fn init_db(config: Option<DatabaseConfig>) -> Result<Option<PgStore>> {
 fn map_db_connect_error(err: sqlx::Error, database_url: &str) -> anyhow::Error {
     if let sqlx::Error::Database(db_err) = &err {
         if db_err.code().as_deref() == Some("3D000") {
-            let db_name = extract_database_name(database_url).unwrap_or("<unknown>");
+            let db_name =
+                extract_database_name(database_url).unwrap_or_else(|| "<unknown>".to_string());
             return anyhow!(
                 "failed to connect to postgres: database \"{db_name}\" does not exist. \
 create it first (for example: createdb {db_name}) or update [database].url in config"
@@ -395,11 +396,55 @@ create it first (for example: createdb {db_name}) or update [database].url in co
     anyhow!(err).context("failed to connect to postgres")
 }
 
-fn extract_database_name(database_url: &str) -> Option<&str> {
-    let trimmed = database_url
+fn extract_database_name(database_url: &str) -> Option<String> {
+    let query = database_url
+        .split_once('?')
+        .map(|(_, query)| query)
+        .unwrap_or_default();
+    for pair in query.split('&').filter(|pair| !pair.is_empty()) {
+        let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+        if key == "dbname" && !value.is_empty() {
+            return Some(value.to_string());
+        }
+    }
+
+    let without_query = database_url
         .split_once('?')
         .map_or(database_url, |(head, _)| head);
-    trimmed.rsplit('/').next().filter(|name| !name.is_empty())
+    let after_authority = without_query
+        .split_once("://")
+        .map_or(without_query, |(_, rest)| {
+            rest.split_once('/').map_or("", |(_, path)| path)
+        });
+    let db_name = after_authority.split('/').next().unwrap_or_default();
+    if db_name.is_empty() {
+        return None;
+    }
+
+    Some(db_name.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::extract_database_name;
+
+    #[test]
+    fn extracts_name_from_path() {
+        let name = extract_database_name("postgres://user:pass@host:5432/app_db?sslmode=disable");
+        assert_eq!(name.as_deref(), Some("app_db"));
+    }
+
+    #[test]
+    fn extracts_name_from_dbname_query() {
+        let name = extract_database_name("postgres://user:pass@host:5432?dbname=app_db");
+        assert_eq!(name.as_deref(), Some("app_db"));
+    }
+
+    #[test]
+    fn does_not_leak_authority_when_path_is_missing() {
+        let name = extract_database_name("postgres://user:pass@host:5432");
+        assert_eq!(name, None);
+    }
 }
 
 async fn restore_store(db: Option<&PgStore>) -> Result<StateStore> {
