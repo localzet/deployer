@@ -107,12 +107,12 @@ For operators who want to run the released container image:
 1. Download the production config template from the repository into a local runtime directory:
 
 ```bash
-mkdir -p deployer/config
+mkdir -p /opt/deployer
 curl -fsSL https://raw.githubusercontent.com/localzet/deployer/main/config/app.prod.toml.example \
-  -o deployer/config/app.toml
+  -o /opt/deployer/app.toml
 ```
 
-2. Edit `deployer/config/app.toml` and set real values for:
+2. Edit `/opt/deployer/app.toml` and set real values for:
    - `github_webhook_secret`
    - `auth.api_token`
    - PostgreSQL connection settings
@@ -132,7 +132,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./config:/app/config:ro
+      - /opt/deployer:/app/config:ro
       - cicd-workspace:/workspace/repos
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
